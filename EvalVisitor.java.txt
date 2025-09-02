@@ -1,0 +1,74 @@
+// EvalVisitor.java
+@Override
+public Double visitParens(labeledExprParser.ParensContext ctx) {
+return visit(ctx.expr());
+}
+
+
+@Override
+public Double visitVariable(labeledExprParser.VariableContext ctx) {
+String id = ctx.ID().getText();
+Double v = memory.get(id);
+if (v == null) return 0.0;
+return v;
+}
+
+
+@Override
+public Double visitFunctionCall(labeledExprParser.FunctionCallContext ctx) {
+String fname = ctx.ID().getText();
+java.util.List<labeledExprParser.ExprContext> args = null;
+if (ctx.exprList() != null) args = ctx.exprList().expr();
+
+
+// Normalize function name lower-case
+fname = fname.toLowerCase();
+
+
+if (fname.equals("deg")) { angleUnit = AngleUnit.DEG; return 0.0; }
+if (fname.equals("rad")) { angleUnit = AngleUnit.RAD; return 0.0; }
+
+
+// unary functions
+double x = 0.0;
+if (args != null && args.size() >= 1) x = visit(args.get(0));
+
+
+switch (fname) {
+case "sin":
+return Math.sin(convertAngleForJava(x));
+case "cos":
+return Math.cos(convertAngleForJava(x));
+case "tan":
+return Math.tan(convertAngleForJava(x));
+case "sqrt":
+return Math.sqrt(x);
+case "ln":
+return Math.log(x);
+case "log":
+return Math.log10(x);
+case "fact": // allow fact(n) as alternative to n!
+return factorial(x);
+default:
+return 0.0;
+}
+}
+
+
+private double convertAngleForJava(double x) {
+if (angleUnit == AngleUnit.DEG) return Math.toRadians(x);
+return x; // already radians
+}
+
+
+private double factorial(double v) {
+// we will compute factorial only for non-negative integers, otherwise throw
+if (v < 0) throw new RuntimeException("Factorial of negative number");
+double rounded = Math.rint(v);
+if (Math.abs(rounded - v) > 1e-9) throw new RuntimeException("Factorial only defined for integers in this calculator");
+long n = (long) rounded;
+long res = 1;
+for (long i = 2; i <= n; i++) res *= i;
+return (double) res;
+}
+}

@@ -1,0 +1,88 @@
+# EvalVisitor.py
+left = self.visit(ctx.expr(0))
+right = self.visit(ctx.expr(1))
+if ctx.op.text == '+':
+return left + right
+return left - right
+
+
+def visitMulDiv(self, ctx:labeledExprParser.MulDivContext):
+left = self.visit(ctx.expr(0))
+right = self.visit(ctx.expr(1))
+if ctx.op.text == '*':
+return left * right
+return left / right
+
+
+def visitPow(self, ctx:labeledExprParser.PowContext):
+left = self.visit(ctx.expr(0))
+right = self.visit(ctx.expr(1))
+return math.pow(left, right)
+
+
+def visitUnaryMinus(self, ctx:labeledExprParser.UnaryMinusContext):
+return -self.visit(ctx.expr())
+
+
+def visitFactorialChain(self, ctx:labeledExprParser.FactorialChainContext):
+val = self.visit(ctx.primary())
+nFact = sum(1 for i in range(ctx.getChildCount()) if ctx.getChild(i).getText() == '!')
+for _ in range(nFact):
+val = self.factorial(val)
+return val
+
+
+def visitNumber(self, ctx:labeledExprParser.NumberContext):
+return float(ctx.NUMBER().getText())
+
+
+def visitParens(self, ctx:labeledExprParser.ParensContext):
+return self.visit(ctx.expr())
+
+
+def visitVariable(self, ctx:labeledExprParser.VariableContext):
+id = ctx.ID().getText()
+return self.memory.get(id, 0.0)
+
+
+def visitFunctionCall(self, ctx:labeledExprParser.FunctionCallContext):
+fname = ctx.ID().getText().lower()
+args = []
+if ctx.exprList() is not None:
+for e in ctx.exprList().expr():
+args.append(self.visit(e))
+
+
+if fname == 'deg':
+self.angleUnit = EvalVisitor.AngleUnit.DEG
+return 0.0
+if fname == 'rad':
+self.angleUnit = EvalVisitor.AngleUnit.RAD
+return 0.0
+
+
+x = args[0] if len(args) >= 1 else 0.0
+if fname == 'sin':
+return math.sin(self._convert_angle(x))
+if fname == 'cos':
+return math.cos(self._convert_angle(x))
+if fname == 'tan':
+return math.tan(self._convert_angle(x))
+if fname == 'sqrt':
+return math.sqrt(x)
+if fname == 'ln':
+return math.log(x)
+if fname == 'log':
+return math.log10(x)
+if fname == 'fact':
+return self.factorial(x)
+return 0.0
+
+
+def _convert_angle(self, x):
+if self.angleUnit == EvalVisitor.AngleUnit.DEG:
+return math.radians(x)
+return x
+
+
+def factorial(s
